@@ -19,9 +19,16 @@ Una aplicación web moderna para gestionar tareas académicas por materias, con 
 
 ### 🎨 Interfaz Moderna
 - **Diseño Responsivo**: Funciona perfectamente en desktop, tablet y móvil
+- **Modo Nocturno**: Alterna entre tema claro y oscuro con persistencia
 - **Tema Moderno**: Interfaz limpia y profesional con Tailwind CSS
 - **Navegación Intuitiva**: Tabs para alternar entre tareas y notas
 - **Estadísticas en Tiempo Real**: Panel lateral con métricas de progreso
+
+### 🔐 Autenticación y Datos
+- **Autenticación Segura**: Sistema de registro e inicio de sesión con Supabase
+- **Cache Inteligente**: Las explicaciones de IA se guardan para evitar duplicados
+- **Datos Persistentes**: Todas las notas y explicaciones se almacenan de forma segura
+- **Privacidad**: Cada usuario solo puede acceder a sus propios datos
 
 ## 🚀 Tecnologías Utilizadas
 
@@ -32,9 +39,12 @@ Una aplicación web moderna para gestionar tareas académicas por materias, con 
 - **Lucide React** - Iconos modernos y consistentes
 
 ### Backend & APIs
+- **Supabase** - Backend como servicio para autenticación y base de datos
 - **Hugging Face API** - Modelos de IA para OCR y explicaciones
-  - `microsoft/trocr-base-printed` - OCR para texto impreso
-  - `microsoft/DialoGPT-medium` - Generación de explicaciones
+  - `microsoft/trocr-large-printed` - OCR principal para texto impreso
+  - `microsoft/trocr-base-handwritten` - OCR para texto manuscrito
+  - `nlpconnect/vit-gpt2-image-captioning` - Fallback para descripción de imágenes
+  - Sistema de fallback automático entre modelos
 
 ### Herramientas de Desarrollo
 - **ESLint** - Linting de código
@@ -63,12 +73,17 @@ Una aplicación web moderna para gestionar tareas académicas por materias, con 
 
 3. **Configurar variables de entorno**
    ```bash
-   cp .env.example .env.local
+   cp .env.example .env
    ```
    
-   Edita `.env.local` y agrega tu token de Hugging Face:
+   Edita `.env` y agrega tus tokens:
    ```env
-   NEXT_PUBLIC_HUGGINGFACE_API_KEY=tu_token_aqui
+   # Hugging Face API
+   NEXT_PUBLIC_HUGGINGFACE_API_KEY=tu_token_huggingface_aqui
+   
+   # Supabase (opcional para funcionalidad completa)
+   NEXT_PUBLIC_SUPABASE_URL=tu_url_supabase
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_clave_supabase
    ```
 
 4. **Ejecutar en modo desarrollo**
@@ -79,14 +94,35 @@ Una aplicación web moderna para gestionar tareas académicas por materias, con 
 5. **Abrir en el navegador**
    Visita [http://localhost:3000](http://localhost:3000)
 
-## 🔧 Configuración de Hugging Face
+## 🔧 Configuración de APIs
 
+### Hugging Face (Requerido para OCR)
 1. Crea una cuenta en [Hugging Face](https://huggingface.co/)
 2. Ve a tu perfil → Settings → Access Tokens
 3. Crea un nuevo token con permisos de lectura
-4. Agrega el token a tu archivo `.env.local`
+4. Agrega el token a tu archivo `.env`
+
+### Supabase (Opcional - para autenticación y cache)
+1. Crea una cuenta en [Supabase](https://supabase.com/)
+2. Crea un nuevo proyecto
+3. Ve a Settings → API para obtener:
+   - Project URL
+   - Project API Key (anon public)
+4. Ejecuta el script SQL en `supabase-setup.sql` para crear las tablas
+5. Consulta `SUPABASE_SETUP.md` para instrucciones detalladas
+
+**Nota**: La aplicación funciona sin Supabase, pero con funcionalidad limitada (sin autenticación ni cache).
 
 ## 📱 Uso de la Aplicación
+
+### Autenticación (Si Supabase está configurado)
+1. Regístrate con email y contraseña
+2. Inicia sesión para acceder a todas las funcionalidades
+3. Tus datos se sincronizarán automáticamente
+
+### Modo Nocturno
+- Haz clic en el botón de tema (🌙/☀️) en la esquina superior derecha
+- La preferencia se guarda automáticamente en tu navegador
 
 ### Gestión de Materias
 1. Haz clic en "Agregar Materia" en el selector superior
@@ -111,26 +147,39 @@ Una aplicación web moderna para gestionar tareas académicas por materias, con 
 ```
 src/
 ├── app/                    # App Router de Next.js
-│   ├── globals.css        # Estilos globales
+│   ├── globals.css        # Estilos globales con variables CSS
 │   ├── layout.tsx         # Layout principal
-│   └── page.tsx           # Página principal
+│   └── page.tsx           # Página principal con autenticación
 ├── components/            # Componentes React
 │   ├── ui/               # Componentes de UI reutilizables
 │   │   ├── Button.tsx    # Componente de botón
 │   │   └── Card.tsx      # Componente de tarjeta
 │   ├── AddTodoForm.tsx   # Formulario para agregar tareas
+│   ├── AuthComponent.tsx # Componente de autenticación
 │   ├── ClassNotesSection.tsx # Sección de notas con OCR
 │   ├── SubjectSelector.tsx   # Selector de materias
+│   ├── ThemeToggle.tsx   # Botón para cambiar tema
 │   ├── TodoApp.tsx       # Componente principal
 │   └── TodoList.tsx      # Lista de tareas
 ├── contexts/             # Contextos de React
-│   └── AppContext.tsx    # Estado global de la aplicación
+│   ├── AppContext.tsx    # Estado global de la aplicación
+│   └── ThemeContext.tsx  # Contexto para modo nocturno
 ├── lib/                  # Utilidades
-│   └── utils.ts          # Funciones auxiliares
+│   ├── utils.ts          # Funciones auxiliares
+│   ├── supabase.js       # Cliente principal de Supabase
+│   ├── supabase-client.js # Cliente browser de Supabase
+│   └── supabase-server.js # Cliente server de Supabase
 ├── services/             # Servicios externos
 │   └── huggingface.ts    # Integración con Hugging Face
 └── types/                # Definiciones de TypeScript
     └── index.ts          # Interfaces y tipos
+
+# Archivos de configuración
+├── .env                   # Variables de entorno
+├── .env.example          # Ejemplo de configuración
+├── SUPABASE_SETUP.md     # Guía de configuración de Supabase
+├── SOLUCION_ERROR_OCR.md # Guía de solución de errores OCR
+└── supabase-setup.sql    # Script SQL para configurar BD
 ```
 
 ## 🔄 Estado de la Aplicación
@@ -176,14 +225,25 @@ Si encuentras algún problema o tienes preguntas:
 
 ## 🔮 Roadmap
 
-- [ ] Autenticación de usuarios
-- [ ] Sincronización en la nube
-- [ ] Notificaciones push
-- [ ] Exportación de datos
-- [ ] Modo offline
-- [ ] Integración con calendarios
-- [ ] Análisis de productividad
+### ✅ Completado
+- [x] Autenticación de usuarios con Supabase
+- [x] Modo nocturno con persistencia
+- [x] OCR avanzado con sistema de fallback
+- [x] Cache inteligente de explicaciones IA
+- [x] Sincronización en la nube (Supabase)
+
+### 🚧 En Desarrollo
+- [ ] Notificaciones push para fechas de vencimiento
+- [ ] Exportación de datos (PDF, Excel)
+- [ ] Modo offline con sincronización automática
+
+### 🔮 Futuro
+- [ ] Integración con calendarios (Google, Outlook)
+- [ ] Análisis de productividad y estadísticas
 - [ ] Soporte para más idiomas
+- [ ] App móvil nativa
+- [ ] Colaboración en tiempo real
+- [ ] Integración con LMS (Moodle, Canvas)
 
 ## 👨‍💻 Autor
 

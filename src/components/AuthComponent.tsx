@@ -45,10 +45,10 @@ export function AuthComponent() {
 
   if (loading) {
     return (
-      <Card className="w-full max-w-md mx-auto">
+      <Card className="w-full max-w-md mx-auto" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
         <CardContent className="p-6 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Cargando...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: 'var(--accent-primary)' }}></div>
+          <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>Cargando...</p>
         </CardContent>
       </Card>
     )
@@ -56,15 +56,15 @@ export function AuthComponent() {
 
   if (user) {
     return (
-      <Card className="w-full max-w-md mx-auto">
+      <Card className="w-full max-w-md mx-auto" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle className="flex items-center space-x-2" style={{ color: 'var(--text-primary)' }}>
             <User size={20} />
             <span>Bienvenido</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="text-sm text-gray-600">
+          <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             <p><strong>Email:</strong> {user.email}</p>
           </div>
           <Button 
@@ -81,9 +81,9 @@ export function AuthComponent() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
+        <CardTitle className="flex items-center space-x-2" style={{ color: 'var(--text-primary)' }}>
           {isSignUp ? <UserPlus size={20} /> : <LogIn size={20} />}
           <span>{isSignUp ? 'Crear Cuenta' : 'Iniciar Sesión'}</span>
         </CardTitle>
@@ -91,7 +91,7 @@ export function AuthComponent() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
               Email
             </label>
             <input
@@ -100,13 +100,26 @@ export function AuthComponent() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2"
+              style={{
+                backgroundColor: 'var(--bg-primary)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-primary)'
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-focus)';
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(49, 130, 206, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-color)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
               placeholder="tu@email.com"
             />
           </div>
           
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="password" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
               Contraseña
             </label>
             <input
@@ -116,13 +129,26 @@ export function AuthComponent() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2"
+              style={{
+                backgroundColor: 'var(--bg-primary)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-primary)'
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-focus)';
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(49, 130, 206, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-color)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
               placeholder="Mínimo 6 caracteres"
             />
           </div>
 
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
+            <div className="text-sm p-2 rounded" style={{ color: 'var(--error)', backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--error)' }}>
               {error}
             </div>
           )}

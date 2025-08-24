@@ -64,7 +64,19 @@ export function ClassNotesSection() {
       setShowAddForm(false)
     } catch (error) {
       console.error('Error procesando imagen:', error)
-      alert('Error al procesar la imagen. Por favor intenta nuevamente.')
+      
+      // Mostrar mensaje específico según el tipo de error
+      let errorMessage = 'Error al procesar la imagen.'
+      
+      if (error instanceof Error) {
+        if (error.message.includes('No Inference Provider available')) {
+          errorMessage = 'Los modelos de OCR no están disponibles actualmente. Esto puede deberse a:\n\n• Los modelos están temporalmente fuera de servicio\n• Se requiere configurar un token de API válido\n• Problemas de conectividad\n\nPor favor, verifica tu configuración en el archivo .env.local y intenta nuevamente.'
+        } else if (error.message.includes('No hay modelos OCR disponibles')) {
+          errorMessage = 'Ningún modelo de OCR está disponible en este momento. La aplicación usará texto simulado como respaldo.'
+        }
+      }
+      
+      alert(errorMessage)
     } finally {
       setIsProcessing(false)
       setProcessingStep('')

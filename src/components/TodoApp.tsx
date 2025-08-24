@@ -9,6 +9,7 @@ import { TodoList } from '@/components/TodoList'
 import { SubjectSelector } from '@/components/SubjectSelector'
 import { AddTodoForm } from '@/components/AddTodoForm'
 import { ClassNotesSection } from '@/components/ClassNotesSection'
+import ThemeToggle from '@/components/ThemeToggle'
 import { Plus, BookOpen, CheckSquare, User, LogOut } from 'lucide-react'
 
 export function TodoApp() {
@@ -30,18 +31,22 @@ export function TodoApp() {
     : 'Todas las materias'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen p-4" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="relative mb-8">
-          {/* User Info */}
-          <div className="absolute top-0 right-0 flex items-center space-x-2">
-            <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg shadow-sm">
-              <User size={16} className="text-gray-600" />
-              <span className="text-sm text-gray-700">{user?.email}</span>
+          {/* User Info and Theme Toggle */}
+          <div className="absolute top-0 right-0 flex items-center space-x-3">
+            <ThemeToggle />
+            <div className="flex items-center space-x-2 px-3 py-2 rounded-lg shadow-sm" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+              <User size={16} style={{ color: 'var(--text-secondary)' }} />
+              <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{user?.email}</span>
               <button
                 onClick={handleSignOut}
-                className="text-gray-500 hover:text-red-500 transition-colors"
+                className="transition-colors"
+                style={{ color: 'var(--text-secondary)' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--error)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
                 title="Cerrar sesión"
               >
                 <LogOut size={16} />
@@ -51,10 +56,10 @@ export function TodoApp() {
           
           {/* Title */}
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            <h1 className="text-4xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
               📚 Learning BOT
             </h1>
-            <p className="text-gray-600">
+            <p style={{ color: 'var(--text-secondary)' }}>
               Tu asistente académico con IA - Organiza tus tareas y convierte tus notas en conocimiento
             </p>
           </div>
@@ -66,25 +71,45 @@ export function TodoApp() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex space-x-1 mb-6 bg-white rounded-lg p-1 shadow-sm">
+        <div className="flex space-x-1 mb-6 rounded-lg p-1 shadow-sm" style={{ backgroundColor: 'var(--bg-secondary)' }}>
           <button
             onClick={() => setActiveTab('todos')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
-              activeTab === 'todos'
-                ? 'bg-blue-500 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className="flex items-center space-x-2 px-4 py-2 rounded-md transition-colors"
+            style={{
+              backgroundColor: activeTab === 'todos' ? 'var(--accent-primary)' : 'transparent',
+              color: activeTab === 'todos' ? 'white' : 'var(--text-secondary)'
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== 'todos') {
+                e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== 'todos') {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }
+            }}
           >
             <CheckSquare size={20} />
             <span>Tareas</span>
           </button>
           <button
             onClick={() => setActiveTab('notes')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
-              activeTab === 'notes'
-                ? 'bg-blue-500 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className="flex items-center space-x-2 px-4 py-2 rounded-md transition-colors"
+            style={{
+              backgroundColor: activeTab === 'notes' ? 'var(--accent-primary)' : 'transparent',
+              color: activeTab === 'notes' ? 'white' : 'var(--text-secondary)'
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== 'notes') {
+                e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== 'notes') {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }
+            }}
           >
             <BookOpen size={20} />
             <span>Notas de Clase</span>

@@ -3,21 +3,49 @@ import { OCRResult, AIExplanation } from '@/types'
 import { aiCacheService } from '../../services/aiCacheService'
 
 // Nota: En producción, esta API key debe estar en variables de entorno
-const HF_TOKEN = process.env.NEXT_PUBLIC_HUGGING_FACE_TOKEN || 'hf_demo_token'
+const HF_TOKEN = process.env.NEXT_PUBLIC_HUGGINGFACE_API_KEY || process.env.NEXT_PUBLIC_HUGGING_FACE_TOKEN || 'hf_demo_token'
 
 const hf = new HfInference(HF_TOKEN)
 
 export async function extractTextFromImage(imageFile: File): Promise<OCRResult> {
   try {
-    // Usar el modelo TrOCR para OCR
-    const result = await hf.imageToText({
-      data: imageFile,
-      model: 'microsoft/trocr-base-printed'
-    })
+    // Intentar con diferentes modelos OCR disponibles
+    let result
+    
+    try {
+      // Primer intento: TrOCR large para texto impreso
+      result = await hf.imageToText({
+        data: imageFile,
+        model: 'microsoft/trocr-large-printed'
+      })
+    } catch (error1) {
+      console.log('Modelo trocr-large-printed no disponible, intentando alternativa...')
+      
+      try {
+        // Segundo intento: TrOCR base para texto manuscrito
+        result = await hf.imageToText({
+          data: imageFile,
+          model: 'microsoft/trocr-base-handwritten'
+        })
+      } catch (error2) {
+        console.log('Modelo trocr-base-handwritten no disponible, intentando alternativa...')
+        
+        try {
+          // Tercer intento: Modelo genérico de visión
+          result = await hf.imageToText({
+            data: imageFile,
+            model: 'nlpconnect/vit-gpt2-image-captioning'
+          })
+        } catch (error3) {
+          console.log('Todos los modelos OCR fallaron, usando simulación')
+          throw new Error('No hay modelos OCR disponibles')
+        }
+      }
+    }
 
     return {
       text: result.generated_text || '',
-      confidence: 0.85 // TrOCR no proporciona confidence, usamos un valor estimado
+      confidence: 0.85 // Valor estimado ya que los modelos no proporcionan confidence
     }
   } catch (error) {
     console.error('Error en OCR:', error)
@@ -102,8 +130,8 @@ async function simulateOCR(_imageFile: File): Promise<OCRResult> {
   await new Promise(resolve => setTimeout(resolve, 2000))
   
   return {
-    text: 'Texto extraído de la imagen (simulado). Para usar OCR real, configura tu token de Hugging Face.',
-    confidence: 0.75
+    text: 'Los modelos de OCR no están disponibles actualmente en Hugging Face. Esto puede deberse a:\n\n1. Los modelos están temporalmente fuera de servicio\n2. Se requiere un token de API válido\n3. Los modelos han sido movidos o renombrados\n\nPor favor, intenta nuevamente más tarde o verifica tu configuración de API.',
+    confidence: 0.0
   }
 }
 
