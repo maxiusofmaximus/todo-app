@@ -3,8 +3,7 @@
 import React, { useState } from 'react'
 import { useApp } from '@/contexts/AppContext'
 import { useAuth } from '../../hooks/useAuth'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
+import { Card, CardContent, CardHeader, CardTitle, Button, Input, Modal, useModal } from '@/components/ui'
 import { extractTextFromImage, generateAIExplanation } from '@/services/huggingface'
 import { formatDate } from '@/lib/utils'
 import { Upload, Image as ImageIcon, Brain, Trash2, Plus, FileText, Loader, X } from 'lucide-react'
@@ -124,11 +123,11 @@ export function ClassNotesSection() {
 
       {/* Processing Status */}
       {isProcessing && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="p-4">
+        <Card variant="info" size="sm">
+          <CardContent size="sm">
             <div className="flex items-center space-x-3">
-              <Loader className="animate-spin text-blue-500" size={20} />
-              <span className="text-blue-700">{processingStep}</span>
+              <Loader className="animate-spin" size={20} />
+              <span>{processingStep}</span>
             </div>
           </CardContent>
         </Card>
@@ -199,11 +198,13 @@ export function ClassNotesSection() {
                         <ImageIcon size={16} />
                         <span>Texto Extraído</span>
                       </h4>
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                          {note.extractedText}
-                        </p>
-                      </div>
+                      <Card variant="secondary" size="sm">
+                        <CardContent size="sm">
+                          <p className="text-sm whitespace-pre-wrap">
+                            {note.extractedText}
+                          </p>
+                        </CardContent>
+                      </Card>
                     </div>
                   )}
 
@@ -214,11 +215,13 @@ export function ClassNotesSection() {
                         <Brain size={16} className="text-purple-500" />
                         <span>Explicación con IA</span>
                       </h4>
-                      <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                          {note.aiExplanation}
-                        </p>
-                      </div>
+                      <Card variant="info" size="sm">
+                        <CardContent size="sm">
+                          <p className="text-sm whitespace-pre-wrap">
+                            {note.aiExplanation}
+                          </p>
+                        </CardContent>
+                      </Card>
                     </div>
                   )}
 
@@ -279,87 +282,73 @@ function AddNoteForm({ onClose, onSubmit, selectedSubjectId, subjects }: AddNote
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <Card className="max-w-md w-full">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Nueva Nota de Clase</CardTitle>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X size={20} />
-            </Button>
+    <Modal isOpen={true} onClose={onClose} title="Nueva Nota de Clase">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          label="Título"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Ej: Ecuaciones cuadráticas"
+          required
+        />
+
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Materia *
+          </label>
+          <select
+            value={subjectId}
+            onChange={(e) => setSubjectId(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+            required
+          >
+            <option value="">Selecciona una materia</option>
+            {subjects.map((subject) => (
+              <option key={subject.id} value={subject.id}>
+                {subject.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Imagen *
+          </label>
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+              id="image-upload"
+              required
+            />
+            <label htmlFor="image-upload" className="cursor-pointer">
+              <Upload className="mx-auto text-gray-400 mb-2" size={32} />
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {file ? file.name : 'Haz clic para subir una imagen'}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                PNG, JPG, GIF hasta 10MB
+              </p>
+            </label>
           </div>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Título *
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Ej: Ecuaciones cuadráticas"
-                required
-              />
-            </div>
+        </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Materia *
-              </label>
-              <select
-                value={subjectId}
-                onChange={(e) => setSubjectId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Selecciona una materia</option>
-                {subjects.map((subject) => (
-                  <option key={subject.id} value={subject.id}>
-                    {subject.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Imagen *
-              </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="image-upload"
-                  required
-                />
-                <label htmlFor="image-upload" className="cursor-pointer">
-                  <Upload className="mx-auto text-gray-400 mb-2" size={32} />
-                  <p className="text-sm text-gray-600">
-                    {file ? file.name : 'Haz clic para subir una imagen'}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    PNG, JPG, GIF hasta 10MB
-                  </p>
-                </label>
-              </div>
-            </div>
-
-            <div className="flex space-x-3 pt-4">
-              <Button type="submit" className="flex-1" disabled={!file || !title.trim() || !subjectId}>
-                Procesar Imagen
-              </Button>
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+        <div className="flex space-x-3 pt-4">
+          <Button 
+            type="submit" 
+            className="flex-1" 
+            disabled={!file || !title.trim() || !subjectId}
+          >
+            Procesar Imagen
+          </Button>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+        </div>
+      </form>
+    </Modal>
   )
 }

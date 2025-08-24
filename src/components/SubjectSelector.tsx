@@ -1,18 +1,18 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useCallback, memo, useMemo } from 'react'
 import { useApp } from '@/contexts/AppContext'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Plus, X } from 'lucide-react'
 
-export function SubjectSelector() {
+function SubjectSelectorComponent() {
   const { state, dispatch } = useApp()
   const [showAddForm, setShowAddForm] = useState(false)
   const [newSubjectName, setNewSubjectName] = useState('')
   const [newSubjectColor, setNewSubjectColor] = useState('#3B82F6')
 
-  const colors = [
+  const colors = useMemo(() => [
     '#3B82F6', // Blue
     '#10B981', // Green
     '#F59E0B', // Yellow
@@ -21,9 +21,24 @@ export function SubjectSelector() {
     '#F97316', // Orange
     '#06B6D4', // Cyan
     '#84CC16', // Lime
-  ]
+  ], [])
 
-  const handleAddSubject = () => {
+  // Memoizar materias con estadísticas
+  const subjectsWithStats = useMemo(() => {
+    return state.subjects.map(subject => {
+      const subjectTodos = state.todos.filter(todo => todo.subjectId === subject.id)
+      const completed = subjectTodos.filter(todo => todo.completed).length
+      const total = subjectTodos.length
+      return {
+        ...subject,
+        todoCount: total,
+        completedCount: completed,
+        completionRate: total > 0 ? Math.round((completed / total) * 100) : 0
+      }
+    })
+  }, [state.subjects, state.todos])
+
+  const handleAddSubject = useCallback(() => {
     if (newSubjectName.trim()) {
       dispatch({
         type: 'ADD_SUBJECT',
@@ -36,14 +51,26 @@ export function SubjectSelector() {
       setNewSubjectColor('#3B82F6')
       setShowAddForm(false)
     }
-  }
+  }, [newSubjectName, newSubjectColor, dispatch])
 
-  const handleSelectSubject = (subjectId: string | null) => {
+  const handleSelectSubject = useCallback((subjectId: string | null) => {
     dispatch({
       type: 'SET_SELECTED_SUBJECT',
       payload: subjectId
     })
-  }
+  }, [dispatch])
+
+  const handleToggleAddForm = useCallback(() => {
+    setShowAddForm(prev => !prev)
+  }, [])
+
+  const handleColorChange = useCallback((color: string) => {
+    setNewSubjectColor(color)
+  }, [])
+
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewSubjectName(e.target.value)
+  }, [])
 
   return (
     <Card>
@@ -58,10 +85,13 @@ export function SubjectSelector() {
           >
             <span>📚</span>
             <span>Todas las materias</span>
+            <span className="ml-2 text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-full">
+              {state.todos.length}
+            </span>
           </Button>
 
-          {/* Subject buttons */}
-          {state.subjects.map((subject) => (
+          {/* Subject buttons with statistics */}
+          {subjectsWithStats.map((subject) => (
             <Button
               key={subject.id}
               variant={state.selectedSubject === subject.id ? 'default' : 'outline'}
@@ -78,6 +108,14 @@ export function SubjectSelector() {
                 style={{ backgroundColor: subject.color }}
               />
               <span>{subject.name}</span>
+              {subject.todoCount > 0 && (
+                <span className="ml-2 text-xs px-2 py-1 rounded-full" style={{
+                  backgroundColor: state.selectedSubject === subject.id ? 'rgba(255,255,255,0.2)' : subject.color + '20',
+                  color: state.selectedSubject === subject.id ? 'white' : subject.color
+                }}>
+                  {subject.completedCount}/{subject.todoCount}
+                </span>
+              )}
             </Button>
           ))}
 
@@ -86,7 +124,7 @@ export function SubjectSelector() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowAddForm(true)}
+              onClick={handleToggleAddForm}
               className="flex items-center space-x-2 text-gray-500 hover:text-gray-700"
             >
               <Plus size={16} />
@@ -98,7 +136,7 @@ export function SubjectSelector() {
                 type="text"
                 placeholder="Nombre de la materia"
                 value={newSubjectName}
-                onChange={(e) => setNewSubjectName(e.target.value)}
+                onChange={handleNameChange}
                 className="px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 onKeyPress={(e) => e.key === 'Enter' && handleAddSubject()}
                 autoFocus
@@ -107,7 +145,7 @@ export function SubjectSelector() {
                 {colors.map((color) => (
                   <button
                     key={color}
-                    onClick={() => setNewSubjectColor(color)}
+                    onClick={() => handleColorChange(color)}
                     className={`w-6 h-6 rounded-full border-2 ${
                       newSubjectColor === color ? 'border-gray-800' : 'border-gray-300'
                     }`}
@@ -126,7 +164,7 @@ export function SubjectSelector() {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setShowAddForm(false)
+                  handleToggleAddForm()
                   setNewSubjectName('')
                   setNewSubjectColor('#3B82F6')
                 }}
@@ -140,3 +178,5 @@ export function SubjectSelector() {
     </Card>
   )
 }
+
+export const SubjectSelector = memo(SubjectSelectorComponent)

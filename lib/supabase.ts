@@ -1,4 +1,36 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
+
+interface MockSupabaseAuth {
+  signUp: () => Promise<{ data: null; error: { message: string } }>
+  signInWithPassword: () => Promise<{ data: null; error: { message: string } }>
+  signOut: () => Promise<{ error: null }>
+  onAuthStateChange: () => { data: { subscription: { unsubscribe: () => void } } }
+}
+
+interface MockSupabaseQuery {
+  select: () => Promise<{ data: any[]; error: null }>
+  insert: () => Promise<{ data: null; error: { message: string } }>
+  update: () => Promise<{ data: null; error: { message: string } }>
+  delete: () => Promise<{ data: null; error: { message: string } }>
+}
+
+interface MockSupabaseClient {
+  auth: MockSupabaseAuth
+  from: (table: string) => MockSupabaseQuery
+}
+
+interface AIExplanation {
+  explanation: string
+  created_at: string
+}
+
+interface AIExplanationInsert {
+  user_id: string
+  text_hash: string
+  original_text: string
+  explanation: string
+  created_at: string
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -16,7 +48,7 @@ if (!isConfigured) {
 }
 
 // Crear cliente de Supabase o mock según la configuración
-const mockSupabase = {
+const mockSupabase: MockSupabaseClient = {
   auth: {
     signUp: () => Promise.resolve({ data: null, error: { message: 'Supabase no configurado' } }),
     signInWithPassword: () => Promise.resolve({ data: null, error: { message: 'Supabase no configurado' } }),
@@ -31,19 +63,23 @@ const mockSupabase = {
   })
 }
 
-export const supabase = isConfigured ? createClient(supabaseUrl, supabaseAnonKey) : mockSupabase
+export const supabase: SupabaseClient | MockSupabaseClient = isConfigured 
+  ? createClient(supabaseUrl!, supabaseAnonKey!) 
+  : mockSupabase
 
 // Database tables
 export const TABLES = {
   AI_EXPLANATIONS: 'ai_explanations',
   USERS: 'users'
-}
+} as const
+
+type TableName = typeof TABLES[keyof typeof TABLES]
 
 // AI Explanations functions
 export const aiExplanationsService = {
   // Get cached explanation for a specific text and user
-  async getCachedExplanation(userId, textHash) {
-    const { data, error } = await supabase
+  async getCachedExplanation(userId: string, textHash: string): Promise<AIExplanation | null> {
+    const { data, error } = await (supabase as SupabaseClient)
       .from(TABLES.AI_EXPLANATIONS)
       .select('explanation, created_at')
       .eq('user_id', userId)
@@ -59,8 +95,13 @@ export const aiExplanationsService = {
   },
 
   // Save new explanation to cache
-  async saveExplanation(userId, textHash, originalText, explanation) {
-    const { data, error } = await supabase
+  async saveExplanation(
+    userId: string, 
+    textHash: string, 
+    originalText: string, 
+    explanation: string
+  ): Promise<AIExplanationInsert | null> {
+    const { data, error } = await (supabase as SupabaseClient)
       .from(TABLES.AI_EXPLANATIONS)
       .insert({
         user_id: userId,
@@ -76,12 +117,12 @@ export const aiExplanationsService = {
       return null
     }
     
-    return data[0]
+    return data?.[0] || null
   },
 
   // Get all explanations for a user
-  async getUserExplanations(userId) {
-    const { data, error } = await supabase
+  async getUserExplanations(userId: string): Promise<AIExplanationInsert[]> {
+    const { data, error } = await (supabase as SupabaseClient)
       .from(TABLES.AI_EXPLANATIONS)
       .select('*')
       .eq('user_id', userId)

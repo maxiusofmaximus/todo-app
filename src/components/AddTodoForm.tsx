@@ -1,16 +1,17 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useCallback, memo } from 'react'
 import { useApp } from '@/contexts/AppContext'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { X } from 'lucide-react'
+import { useDebounce, useMemoizedCallback } from '@/hooks/usePerformance'
 
 interface AddTodoFormProps {
   onClose: () => void
 }
 
-export function AddTodoForm({ onClose }: AddTodoFormProps) {
+export const AddTodoForm = memo(function AddTodoForm({ onClose }: AddTodoFormProps) {
   const { state, dispatch } = useApp()
   const [formData, setFormData] = useState({
     title: '',
@@ -20,10 +21,19 @@ export function AddTodoForm({ onClose }: AddTodoFormProps) {
     dueDate: ''
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Debounce para validación en tiempo real
+  const debouncedTitle = useDebounce(formData.title, 300)
+  const debouncedDescription = useDebounce(formData.description, 500)
+
+  // Validación memoizada
+  const isFormValid = useMemoizedCallback(() => {
+    return debouncedTitle.trim().length > 0
+  }, [debouncedTitle])
+
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.title.trim()) return
+    if (!isFormValid()) return
 
     dispatch({
       type: 'ADD_TODO',
@@ -38,18 +48,22 @@ export function AddTodoForm({ onClose }: AddTodoFormProps) {
     })
 
     onClose()
-  }
+  }, [formData, dispatch, onClose, isFormValid])
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = useCallback((field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-  }
+  }, [])
+
+  const handleClose = useCallback(() => {
+    onClose()
+  }, [onClose])
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Nueva Tarea</CardTitle>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <Button variant="ghost" size="icon" onClick={handleClose}>
             <X size={20} />
           </Button>
         </div>
@@ -65,7 +79,7 @@ export function AddTodoForm({ onClose }: AddTodoFormProps) {
               type="text"
               value={formData.title}
               onChange={(e) => handleChange('title', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${!isFormValid() && debouncedTitle ? 'border-red-500' : ''}`}
               placeholder="Ej: Estudiar para el examen de matemáticas"
               required
               autoFocus
@@ -137,10 +151,10 @@ export function AddTodoForm({ onClose }: AddTodoFormProps) {
 
           {/* Actions */}
           <div className="flex space-x-3 pt-4">
-            <Button type="submit" className="flex-1">
+            <Button type="submit" className="flex-1" disabled={!isFormValid()}>
               Crear Tarea
             </Button>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleClose}>
               Cancelar
             </Button>
           </div>
@@ -148,4 +162,4 @@ export function AddTodoForm({ onClose }: AddTodoFormProps) {
       </CardContent>
     </Card>
   )
-}
+})

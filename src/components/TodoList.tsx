@@ -1,21 +1,45 @@
 'use client'
 
-import React from 'react'
+import React, { memo, useCallback, useMemo } from 'react'
 import { useApp } from '@/contexts/AppContext'
 import { Todo } from '@/types'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
-import { formatDate } from '@/lib/utils'
+import { formatDate, entityUtils } from '@/lib/utils'
 import { Check, Clock, AlertCircle, Trash2 } from 'lucide-react'
 
 interface TodoListProps {
   todos: Todo[]
 }
 
-export function TodoList({ todos }: TodoListProps) {
-  const { state, dispatch } = useApp()
+function TodoListComponent({ todos }: TodoListProps) {
+  const { dispatch } = useApp()
 
-  const handleToggleComplete = (todoId: string, completed: boolean) => {
+  // Memoizar estadísticas para evitar recálculos
+  const todoStats = useMemo(() => {
+    return entityUtils.getTodoStats(todos)
+  }, [todos])
+
+  // Memoizar todos ordenados por prioridad y fecha
+  const sortedTodos = useMemo(() => {
+    const priorityOrder = { high: 3, medium: 2, low: 1 }
+    return [...todos].sort((a, b) => {
+      // Primero por completado (incompletos primero)
+      if (a.completed !== b.completed) {
+        return a.completed ? 1 : -1
+      }
+      // Luego por prioridad
+      const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority]
+      if (priorityDiff !== 0) return priorityDiff
+      // Finalmente por fecha de vencimiento
+      if (a.dueDate && b.dueDate) {
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+      }
+      return a.dueDate ? -1 : b.dueDate ? 1 : 0
+    })
+  }, [todos])
+
+  const handleToggleComplete = useCallback((todoId: string, completed: boolean) => {
     dispatch({
       type: 'UPDATE_TODO',
       payload: {
@@ -23,16 +47,16 @@ export function TodoList({ todos }: TodoListProps) {
         updates: { completed }
       }
     })
-  }
+  }, [dispatch])
 
-  const handleDeleteTodo = (todoId: string) => {
+  const handleDeleteTodo = useCallback((todoId: string) => {
     if (confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
       dispatch({
         type: 'DELETE_TODO',
         payload: todoId
       })
     }
-  }
+  }, [dispatch])
 
   const getPriorityIcon = (priority: Todo['priority']) => {
     switch (priority) {
@@ -75,23 +99,27 @@ export function TodoList({ todos }: TodoListProps) {
     )
   }
 
-  const sortedTodos = [...todos].sort((a, b) => {
-    // Primero por completado (pendientes primero)
-    if (a.completed !== b.completed) {
-      return a.completed ? 1 : -1
-    }
-    // Luego por prioridad
-    const priorityOrder = { high: 3, medium: 2, low: 1 }
-    if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-      return priorityOrder[b.priority] - priorityOrder[a.priority]
-    }
-    // Finalmente por fecha de creación
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  })
-
   return (
-    <div className="space-y-3">
-      {sortedTodos.map((todo) => {
+    <div className="space-y-4">
+      {/* Estadísticas rápidas */}
+      {todoStats.total > 0 && (
+        <Card variant="secondary" size="sm">
+          <CardContent size="sm">
+            <div className="flex justify-between items-center text-sm">
+              <span>Total: {todoStats.total}</span>
+              <span>Completadas: {todoStats.completed}</span>
+              <span>Pendientes: {todoStats.pending}</span>
+              {todoStats.overdue > 0 && (
+                <span className="text-red-500 font-medium">Vencidas: {todoStats.overdue}</span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Lista de tareas ordenadas */}
+      <div className="space-y-3">
+        {sortedTodos.map((todo) => {
         const subject = getSubjectInfo(todo.subjectId)
         
         return (
@@ -175,8 +203,11 @@ export function TodoList({ todos }: TodoListProps) {
               </div>
             </CardContent>
           </Card>
-        )
-      })}
+        )}
+        )}
+      </div>
     </div>
   )
 }
+
+export const TodoList = memo(TodoListComponent)

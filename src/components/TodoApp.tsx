@@ -1,65 +1,79 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useCallback, useMemo, memo } from 'react'
 import { useApp } from '@/contexts/AppContext'
 import { useAuth } from '../../hooks/useAuth'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
+import { Card, CardContent, CardHeader, CardTitle, Button, Modal } from '@/components/ui'
 import { TodoList } from '@/components/TodoList'
 import { SubjectSelector } from '@/components/SubjectSelector'
-import { AddTodoForm } from '@/components/AddTodoForm'
-import { ClassNotesSection } from '@/components/ClassNotesSection'
+import { LazyAddTodoForm, LazyClassNotesSection } from '@/components/LazyComponents'
+import PerformanceStats from '@/components/PerformanceStats'
 import ThemeToggle from '@/components/ThemeToggle'
 import { Plus, BookOpen, CheckSquare, User, LogOut } from 'lucide-react'
 
-export function TodoApp() {
+function TodoAppComponent() {
   const { state } = useApp()
   const { user, signOut } = useAuth()
   const [activeTab, setActiveTab] = useState<'todos' | 'notes'>('todos')
   const [showAddForm, setShowAddForm] = useState(false)
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     await signOut()
-  }
+  }, [signOut])
 
-  const filteredTodos = state.selectedSubject
-    ? state.todos.filter(todo => todo.subjectId === state.selectedSubject)
-    : state.todos
+  const handleTabChange = useCallback((tab: 'todos' | 'notes') => {
+    setActiveTab(tab)
+  }, [])
 
-  const selectedSubjectName = state.selectedSubject
-    ? state.subjects.find(s => s.id === state.selectedSubject)?.name
-    : 'Todas las materias'
+  const handleToggleAddForm = useCallback(() => {
+    setShowAddForm(prev => !prev)
+  }, [])
+
+  const filteredTodos = useMemo(() => {
+    return state.selectedSubject
+      ? state.todos.filter(todo => todo.subjectId === state.selectedSubject)
+      : state.todos
+  }, [state.selectedSubject, state.todos])
+
+  const selectedSubjectName = useMemo(() => {
+    return state.selectedSubject
+      ? state.subjects.find(s => s.id === state.selectedSubject)?.name
+      : 'Todas las materias'
+  }, [state.selectedSubject, state.subjects])
 
   return (
-    <div className="min-h-screen p-4" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <div className="min-h-screen p-4 bg-gray-50 dark:bg-gray-900">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="relative mb-8">
           {/* User Info and Theme Toggle */}
           <div className="absolute top-0 right-0 flex items-center space-x-3">
             <ThemeToggle />
-            <div className="flex items-center space-x-2 px-3 py-2 rounded-lg shadow-sm" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-              <User size={16} style={{ color: 'var(--text-secondary)' }} />
-              <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{user?.email}</span>
-              <button
-                onClick={handleSignOut}
-                className="transition-colors"
-                style={{ color: 'var(--text-secondary)' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--error)'}
-                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
-                title="Cerrar sesión"
-              >
-                <LogOut size={16} />
-              </button>
-            </div>
+            <Card variant="secondary" size="sm">
+              <CardContent size="sm">
+                <div className="flex items-center space-x-2">
+                  <User size={16} className="text-gray-500" />
+                  <span className="text-sm">{user?.email}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleSignOut}
+                    className="text-gray-500 hover:text-red-500"
+                    title="Cerrar sesión"
+                  >
+                    <LogOut size={16} />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
           
           {/* Title */}
           <div className="text-center">
-            <h1 className="text-4xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+            <h1 className="text-4xl font-bold mb-2 text-gray-900 dark:text-white">
               📚 Learning BOT
             </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-gray-600 dark:text-gray-400">
               Tu asistente académico con IA - Organiza tus tareas y convierte tus notas en conocimiento
             </p>
           </div>
@@ -71,50 +85,28 @@ export function TodoApp() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex space-x-1 mb-6 rounded-lg p-1 shadow-sm" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-          <button
-            onClick={() => setActiveTab('todos')}
-            className="flex items-center space-x-2 px-4 py-2 rounded-md transition-colors"
-            style={{
-              backgroundColor: activeTab === 'todos' ? 'var(--accent-primary)' : 'transparent',
-              color: activeTab === 'todos' ? 'white' : 'var(--text-secondary)'
-            }}
-            onMouseEnter={(e) => {
-              if (activeTab !== 'todos') {
-                e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (activeTab !== 'todos') {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }
-            }}
-          >
-            <CheckSquare size={20} />
-            <span>Tareas</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('notes')}
-            className="flex items-center space-x-2 px-4 py-2 rounded-md transition-colors"
-            style={{
-              backgroundColor: activeTab === 'notes' ? 'var(--accent-primary)' : 'transparent',
-              color: activeTab === 'notes' ? 'white' : 'var(--text-secondary)'
-            }}
-            onMouseEnter={(e) => {
-              if (activeTab !== 'notes') {
-                e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (activeTab !== 'notes') {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }
-            }}
-          >
-            <BookOpen size={20} />
-            <span>Notas de Clase</span>
-          </button>
-        </div>
+        <Card variant="secondary" size="sm" className="mb-6">
+          <CardContent size="sm">
+            <div className="flex space-x-1">
+              <Button
+                variant={activeTab === 'todos' ? 'default' : 'ghost'}
+                onClick={() => handleTabChange('todos')}
+                leftIcon={<CheckSquare size={20} />}
+                className="flex-1"
+              >
+                Tareas
+              </Button>
+              <Button
+                variant={activeTab === 'notes' ? 'default' : 'ghost'}
+                onClick={() => handleTabChange('notes')}
+                leftIcon={<BookOpen size={20} />}
+                className="flex-1"
+              >
+                Notas de Clase
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -129,11 +121,10 @@ export function TodoApp() {
                       <span>Tareas - {selectedSubjectName}</span>
                     </CardTitle>
                     <Button
-                      onClick={() => setShowAddForm(true)}
-                      className="flex items-center space-x-2"
+                      onClick={handleToggleAddForm}
+                      leftIcon={<Plus size={16} />}
                     >
-                      <Plus size={16} />
-                      <span>Nueva Tarea</span>
+                      Nueva Tarea
                     </Button>
                   </div>
                 </CardHeader>
@@ -142,42 +133,14 @@ export function TodoApp() {
                 </CardContent>
               </Card>
             ) : (
-              <ClassNotesSection />
+              <LazyClassNotesSection />
             )}
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Statistics */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Estadísticas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Total de tareas</span>
-                    <span className="font-semibold">{filteredTodos.length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Completadas</span>
-                    <span className="font-semibold text-green-600">
-                      {filteredTodos.filter(t => t.completed).length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Pendientes</span>
-                    <span className="font-semibold text-orange-600">
-                      {filteredTodos.filter(t => !t.completed).length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Materias</span>
-                    <span className="font-semibold">{state.subjects.length}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Estadísticas de Rendimiento */}
+            <PerformanceStats />
 
             {/* Quick Actions */}
             <Card>
@@ -189,18 +152,26 @@ export function TodoApp() {
                   <Button
                     variant="outline"
                     className="w-full justify-start"
-                    onClick={() => setActiveTab('todos')}
+                    onClick={() => handleTabChange('todos')}
+                    leftIcon={<CheckSquare size={16} />}
                   >
-                    <CheckSquare size={16} className="mr-2" />
                     Ver todas las tareas
                   </Button>
                   <Button
                     variant="outline"
                     className="w-full justify-start"
-                    onClick={() => setActiveTab('notes')}
+                    onClick={() => handleTabChange('notes')}
+                    leftIcon={<BookOpen size={16} />}
                   >
-                    <BookOpen size={16} className="mr-2" />
                     Revisar notas
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={handleToggleAddForm}
+                    leftIcon={<Plus size={16} />}
+                  >
+                    Nueva Tarea
                   </Button>
                 </div>
               </CardContent>
@@ -210,13 +181,13 @@ export function TodoApp() {
 
         {/* Add Todo Modal */}
         {showAddForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full">
-              <AddTodoForm onClose={() => setShowAddForm(false)} />
-            </div>
-          </div>
+          <Modal isOpen={true} onClose={handleToggleAddForm} title="Nueva Tarea">
+            <LazyAddTodoForm onClose={handleToggleAddForm} />
+          </Modal>
         )}
       </div>
     </div>
   )
 }
+
+export const TodoApp = memo(TodoAppComponent)

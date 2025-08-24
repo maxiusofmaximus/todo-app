@@ -1,14 +1,18 @@
 'use client';
 
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 
-const ThemeToggle: React.FC = () => {
+const ThemeToggle: React.FC = memo(() => {
   const { theme, toggleTheme, isDark } = useTheme();
+
+  const handleToggle = useCallback(() => {
+    toggleTheme();
+  }, [toggleTheme]);
 
   return (
     <button
-      onClick={toggleTheme}
+      onClick={handleToggle}
       className="theme-toggle-btn"
       aria-label={`Cambiar a modo ${isDark ? 'claro' : 'oscuro'}`}
       title={`Cambiar a modo ${isDark ? 'claro' : 'oscuro'}`}
@@ -115,6 +119,8 @@ const ThemeToggle: React.FC = () => {
       `}</style>
     </button>
   );
-};
+});
+
+ThemeToggle.displayName = 'ThemeToggle';
 
 export default ThemeToggle;

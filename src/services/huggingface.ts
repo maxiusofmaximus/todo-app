@@ -1,6 +1,6 @@
 import { HfInference } from '@huggingface/inference'
 import { OCRResult, AIExplanation } from '@/types'
-import { aiCacheService } from '../../services/aiCacheService'
+import { aiCacheService } from '../../services/aiCacheService.ts'
 
 // Nota: En producción, esta API key debe estar en variables de entorno
 const HF_TOKEN = process.env.NEXT_PUBLIC_HUGGINGFACE_API_KEY || process.env.NEXT_PUBLIC_HUGGING_FACE_TOKEN || 'hf_demo_token'
