@@ -9,9 +9,6 @@ const hf = new HfInference(HF_TOKEN)
 
 export async function extractTextFromImage(imageFile: File): Promise<OCRResult> {
   try {
-    // Convertir archivo a base64
-    const imageData = await fileToBase64(imageFile)
-    
     // Usar el modelo TrOCR para OCR
     const result = await hf.imageToText({
       data: imageFile,
@@ -100,7 +97,7 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 // Función de OCR simulada como fallback
-async function simulateOCR(imageFile: File): Promise<OCRResult> {
+async function simulateOCR(_imageFile: File): Promise<OCRResult> {
   // Simular procesamiento
   await new Promise(resolve => setTimeout(resolve, 2000))
   

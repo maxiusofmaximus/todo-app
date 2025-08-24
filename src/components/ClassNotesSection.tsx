@@ -7,7 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { extractTextFromImage, generateAIExplanation } from '@/services/huggingface'
 import { formatDate } from '@/lib/utils'
-import { Upload, Image, Brain, Trash2, Plus, FileText, Loader, X } from 'lucide-react'
+import { Upload, Image as ImageIcon, Brain, Trash2, Plus, FileText, Loader, X } from 'lucide-react'
+import { Subject } from '@/types'
+import Image from 'next/image'
 
 export function ClassNotesSection() {
   const { state, dispatch } = useApp()
@@ -168,9 +170,11 @@ export function ClassNotesSection() {
                   {/* Image */}
                   {note.imageUrl && (
                     <div className="mb-4">
-                      <img
+                      <Image
                         src={note.imageUrl}
                         alt="Nota de clase"
+                        width={800}
+                        height={600}
                         className="max-w-full h-auto rounded-lg border"
                       />
                     </div>
@@ -180,7 +184,7 @@ export function ClassNotesSection() {
                   {note.extractedText && (
                     <div className="mb-4">
                       <h4 className="font-medium text-gray-900 mb-2 flex items-center space-x-2">
-                        <Image size={16} />
+                        <ImageIcon size={16} />
                         <span>Texto Extraído</span>
                       </h4>
                       <div className="bg-gray-50 p-3 rounded-lg">
@@ -238,7 +242,7 @@ interface AddNoteFormProps {
   onClose: () => void
   onSubmit: (file: File, title: string, subjectId: string) => void
   selectedSubjectId: string | null
-  subjects: any[]
+  subjects: Subject[]
 }
 
 function AddNoteForm({ onClose, onSubmit, selectedSubjectId, subjects }: AddNoteFormProps) {

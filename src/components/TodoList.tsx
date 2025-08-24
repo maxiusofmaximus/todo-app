@@ -6,7 +6,7 @@ import { Todo } from '@/types'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { formatDate } from '@/lib/utils'
-import { Check, Clock, AlertCircle, Trash2, Edit } from 'lucide-react'
+import { Check, Clock, AlertCircle, Trash2 } from 'lucide-react'
 
 interface TodoListProps {
   todos: Todo[]

@@ -29,7 +29,7 @@ export function AuthComponent() {
       } else if (isSignUp) {
         setError('Revisa tu email para confirmar tu cuenta')
       }
-    } catch (err) {
+    } catch (_) {
       setError('Error inesperado. Intenta nuevamente.')
     } finally {
       setIsSubmitting(false)
