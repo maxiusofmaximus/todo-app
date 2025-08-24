@@ -2,18 +2,24 @@
 
 import React, { useState } from 'react'
 import { useApp } from '@/contexts/AppContext'
+import { useAuth } from '../../hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { TodoList } from './TodoList'
-import { SubjectSelector } from './SubjectSelector'
-import { AddTodoForm } from './AddTodoForm'
-import { ClassNotesSection } from './ClassNotesSection'
-import { Plus, BookOpen, CheckSquare } from 'lucide-react'
+import { TodoList } from '@/components/TodoList'
+import { SubjectSelector } from '@/components/SubjectSelector'
+import { AddTodoForm } from '@/components/AddTodoForm'
+import { ClassNotesSection } from '@/components/ClassNotesSection'
+import { Plus, BookOpen, CheckSquare, User, LogOut } from 'lucide-react'
 
 export function TodoApp() {
   const { state } = useApp()
+  const { user, signOut } = useAuth()
   const [activeTab, setActiveTab] = useState<'todos' | 'notes'>('todos')
   const [showAddForm, setShowAddForm] = useState(false)
+
+  const handleSignOut = async () => {
+    await signOut()
+  }
 
   const filteredTodos = state.selectedSubject
     ? state.todos.filter(todo => todo.subjectId === state.selectedSubject)
@@ -27,13 +33,31 @@ export function TodoApp() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            📚 Lista de Tareas Académicas
-          </h1>
-          <p className="text-gray-600">
-            Organiza tus tareas por materia y convierte tus notas en conocimiento
-          </p>
+        <div className="relative mb-8">
+          {/* User Info */}
+          <div className="absolute top-0 right-0 flex items-center space-x-2">
+            <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg shadow-sm">
+              <User size={16} className="text-gray-600" />
+              <span className="text-sm text-gray-700">{user?.email}</span>
+              <button
+                onClick={handleSignOut}
+                className="text-gray-500 hover:text-red-500 transition-colors"
+                title="Cerrar sesión"
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
+          </div>
+          
+          {/* Title */}
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              📚 Learning BOT
+            </h1>
+            <p className="text-gray-600">
+              Tu asistente académico con IA - Organiza tus tareas y convierte tus notas en conocimiento
+            </p>
+          </div>
         </div>
 
         {/* Subject Selector */}

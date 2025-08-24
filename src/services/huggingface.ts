@@ -1,5 +1,6 @@
 import { HfInference } from '@huggingface/inference'
 import { OCRResult, AIExplanation } from '@/types'
+import { aiCacheService } from '../../services/aiCacheService'
 
 // Nota: En producción, esta API key debe estar en variables de entorno
 const HF_TOKEN = process.env.NEXT_PUBLIC_HUGGING_FACE_TOKEN || 'hf_demo_token'
@@ -28,8 +29,21 @@ export async function extractTextFromImage(imageFile: File): Promise<OCRResult> 
   }
 }
 
-export async function generateAIExplanation(text: string, subject?: string): Promise<AIExplanation> {
+export async function generateAIExplanation(text: string, subject?: string, userId?: string): Promise<AIExplanation> {
   try {
+    // Check cache first if user is provided
+    if (userId) {
+      const cachedExplanation = await aiCacheService.getCachedExplanation(userId, text)
+      if (cachedExplanation) {
+        console.log('Using cached explanation for user:', userId)
+        return {
+          explanation: cachedExplanation.explanation,
+          concepts: extractConcepts(text),
+          difficulty: determineDifficulty(text)
+        }
+      }
+    }
+
     const prompt = `Como un profesor experto en ${subject || 'educación'}, explica de manera clara y didáctica el siguiente contenido:
 
 "${text}"
@@ -53,6 +67,12 @@ Respuesta:`
 
     // Procesar la respuesta para extraer información estructurada
     const explanation = result.generated_text || 'No se pudo generar una explicación.'
+    
+    // Save to cache if user is provided
+    if (userId && explanation !== 'No se pudo generar una explicación.') {
+      await aiCacheService.saveExplanation(userId, text, explanation)
+      console.log('Explanation saved to cache for user:', userId)
+    }
     
     return {
       explanation,

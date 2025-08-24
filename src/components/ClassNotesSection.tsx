@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { useApp } from '@/contexts/AppContext'
+import { useAuth } from '../../hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { extractTextFromImage, generateAIExplanation } from '@/services/huggingface'
@@ -10,6 +11,7 @@ import { Upload, Image, Brain, Trash2, Plus, FileText, Loader, X } from 'lucide-
 
 export function ClassNotesSection() {
   const { state, dispatch } = useApp()
+  const { user } = useAuth()
   const [showAddForm, setShowAddForm] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [processingStep, setProcessingStep] = useState('')
@@ -42,7 +44,7 @@ export function ClassNotesSection() {
       // Generar explicación con IA
       setProcessingStep('Generando explicación con IA...')
       const subject = state.subjects.find(s => s.id === subjectId)
-      const aiExplanation = await generateAIExplanation(ocrResult.text, subject?.name)
+      const aiExplanation = await generateAIExplanation(ocrResult.text, subject?.name, user?.id)
 
       // Crear la nota
       dispatch({
